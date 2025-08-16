@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { FiBriefcase, FiEdit, FiKey, FiPlus, FiSearch, FiUpload, FiUser, FiX } from 'react-icons/fi'
+import { FiBriefcase, FiKey, FiSearch, FiUpload, FiUser, FiX } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
 
 const AdminPost = () => {
@@ -124,68 +124,6 @@ const AdminPost = () => {
 		setIsModalOpen(true)
 	}
 
-	const handleSubmit = async (e) => {
-		e.preventDefault()
-		try {
-			const formData = new FormData()
-			formData.append('fullName', userData.fullName)
-			formData.append('position', userData.position)
-			formData.append('username', userData.username)
-			formData.append('hodimID', userData.hodimID)
-			formData.append('role', userData.role)
-
-			// Faqat yangi parol kiritilgan bo'lsa yuboramiz
-			if (userData.password) {
-				formData.append('password', userData.password)
-			}
-
-			if (imageFile) {
-				formData.append('image', imageFile)
-			}
-
-			let res
-			if (isEditMode) {
-				res = await axios.put(
-					`${import.meta.env.VITE_BASE_URL}/api/user/updatepost/${userData._id}`,
-					formData,
-					{
-						headers: {
-							'Authorization': `Bearer ${token}`,
-							'Content-Type': 'multipart/form-data'
-						},
-					}
-				)
-			} else {
-				// Parol majburiy
-				if (!userData.password) {
-					toast.warning('Parolni kiriting!')
-					return
-				}
-				res = await axios.post(
-					`${import.meta.env.VITE_BASE_URL}/api/user/registerpost`,
-					formData,
-					{
-						headers: {
-							'Authorization': `Bearer ${token}`,
-							'Content-Type': 'multipart/form-data'
-						},
-					}
-				)
-			}
-
-			if (res.data.success) {
-				toast.success(isEditMode ? "Xodim maʼlumotlari yangilandi!" : "Yangi xodim qoʻshildi!")
-				fetchUsers()
-				setIsModalOpen(false)
-				resetForm()
-			} else {
-				toast.error(res.data.message || 'Xatolik yuz berdi')
-			}
-		} catch (error) {
-			console.error('Xatolik:', error)
-			toast.error(error.response?.data?.message || 'Server xatosi')
-		}
-	}
 
 	const getStatusClass = (status) => {
 		switch (status) {
@@ -232,16 +170,6 @@ const AdminPost = () => {
 							onChange={(e) => setSearchTerm(e.target.value)}
 						/>
 					</div>
-
-					<button
-						onClick={() => {
-							resetForm()
-							setIsModalOpen(true)
-						}}
-						className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-					>
-						<FiPlus /> Yangi Post xodimi
-					</button>
 				</div>
 			</div>
 
@@ -255,7 +183,6 @@ const AdminPost = () => {
 								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lavozim</th>
 								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foydalanuvchi nomi</th>
 								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holati</th>
-								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
 							</tr>
 						</thead>
 						<tbody className="bg-white divide-y divide-gray-200">
@@ -290,15 +217,6 @@ const AdminPost = () => {
 											<span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full shadow-sm ${getStatusClass(user.attendanceStatus)}`}>
 												{getStatusText(user.attendanceStatus)}
 											</span>
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-											<button
-												onClick={() => openEditModal(user)}
-												className="text-blue-600 hover:text-blue-900"
-												title="Tahrirlash"
-											>
-												<FiEdit />
-											</button>
 										</td>
 									</tr>
 								))

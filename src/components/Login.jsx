@@ -1,10 +1,11 @@
 import axios from 'axios'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 const Login = () => {
+	// Form ma'lumotlari va holatlari
 	const [formData, setFormData] = useState({
 		username: '',
 		password: ''
@@ -16,8 +17,78 @@ const Login = () => {
 	})
 
 	const [isLoading, setIsLoading] = useState(false)
+	const [isCheckingToken, setIsCheckingToken] = useState(true)
 	const navigate = useNavigate()
 
+	// Token tekshirish funksiyasi
+	const verifyToken = async (token) => {
+		try {
+			const response = await axios.get(
+				`${import.meta.env.VITE_BASE_URL}/api/user/verify-token`,
+				{
+					headers: {
+						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json'
+					},
+					timeout: 10000
+				}
+			)
+			return response.data?.success || false
+		} catch (error) {
+			console.error('Token tekshirishda xatolik:', error)
+			return false
+		}
+	}
+
+	// Rolga qarab yo'naltirish
+	const redirectBasedOnRole = (role) => {
+		const lowerRole = role?.toLowerCase()
+
+		switch (lowerRole) {
+			case 'admin':
+				navigate('/admin', { replace: true })
+				break
+			case 'viewer':
+				navigate('/viewer', { replace: true })
+				break
+			case 'post':
+				navigate('/post', { replace: true })
+				break
+			default:
+				navigate('/', { replace: true })
+		}
+	}
+
+	// Komponent yuklanganda token tekshirish
+	useEffect(() => {
+		const checkAuthStatus = async () => {
+			const token = localStorage.getItem('token')
+			const role = localStorage.getItem('content-type')
+
+			// Agar token yoki role bo'lmasa
+			if (!token || !role) {
+				setIsCheckingToken(false)
+				return
+			}
+
+			// Token haqiqiyligini tekshirish
+			const isValidToken = await verifyToken(token)
+
+			if (isValidToken) {
+				redirectBasedOnRole(role)
+			} else {
+				// Noto'g'ri token, saqlangan ma'lumotlarni tozalash
+				localStorage.removeItem('token')
+				localStorage.removeItem('content-type')
+			}
+
+			setIsCheckingToken(false)
+		}
+
+		checkAuthStatus()
+	}, [navigate])
+
+	// Input maydonlarini boshqarish
 	const handleChange = (e) => {
 		const { name, value } = e.target
 		setFormData(prev => ({
@@ -26,9 +97,11 @@ const Login = () => {
 		}))
 	}
 
+	// Formani yuborish
 	const handleSubmit = async (e) => {
 		e.preventDefault()
 
+		// Maydonlarni to'ldirishni tekshirish
 		if (!formData.username.trim() || !formData.password.trim()) {
 			toast.error('Iltimos, barcha maydonlarni to\'ldiring', {
 				position: "top-right",
@@ -40,24 +113,30 @@ const Login = () => {
 		setIsLoading(true)
 
 		try {
+			// Autentifikatsiya so'rovini yuborish
 			const res = await axios.post(
 				`${import.meta.env.VITE_BASE_URL}/api/user/auth`,
 				formData,
 				{
 					headers: {
 						'Content-Type': 'application/json'
-					}
+					},
+					timeout: 10000 // 10 soniya timeout
 				}
 			)
-			console.log(res.data)
-			if (res.data.success) {
-				const token = res.data.token
-				const role = res.data.role.toLowerCase()
 
+			if (res.data?.success) {
+				const token = res.data.token
+				const role = res.data.role?.toLowerCase()
+
+				// Token va rolni saqlash
 				localStorage.setItem('token', token)
 				localStorage.setItem('content-type', role)
 
+				// Rollar ro'yxati
 				const validRoles = ['admin', 'viewer', 'post']
+
+				// Rolni tekshirish
 				if (!validRoles.includes(role)) {
 					toast.error('Sizga kirish uchun ruxsat yo\'q', {
 						position: "top-right",
@@ -66,26 +145,14 @@ const Login = () => {
 					return
 				}
 
+				// Muvaffaqiyatli kirish xabari
 				toast.success('Muvaffaqiyatli kirish!', {
 					position: "top-right",
 					autoClose: 2000,
 				})
-				switch (res.data.role) {
-					case 'admin':
-						navigate('/admin')
-						console.log("Adminga kirish")
-						break
-					case 'viewer':
-						navigate('/viewer')
-						console.log("Userga kirish")
-						break
-					case 'post':
-						navigate('/post')
-						console.log("Userga kirish")
-						break
-					default:
-						navigate('/')
-				}
+
+				// Rolga qarab yo'naltirish
+				redirectBasedOnRole(role)
 			} else {
 				toast.error('Login yoki parol noto\'g\'ri', {
 					position: "top-right",
@@ -93,12 +160,19 @@ const Login = () => {
 				})
 			}
 		} catch (error) {
+			// Xatoliklarni boshqarish
 			let errorMessage = 'Tizimda xatolik yuz berdi'
 
 			if (axios.isAxiosError(error)) {
-				errorMessage = error.response?.data?.message ||
-					error.message ||
-					'Serverga ulanib bo\'lmadi'
+				if (error.code === 'ECONNABORTED') {
+					errorMessage = 'Serverga ulanib bo\'lmadi (timeout)'
+				} else if (error.response?.status === 401) {
+					errorMessage = 'Kirish rad etildi. Login yoki parol noto\'g\'ri'
+				} else {
+					errorMessage = error.response?.data?.message ||
+						error.message ||
+						'Serverga ulanib bo\'lmadi'
+				}
 			}
 
 			toast.error(errorMessage, {
@@ -110,6 +184,22 @@ const Login = () => {
 		}
 	}
 
+	// Token tekshirilayotgan paytda yuklanish ko'rsatkichi
+	if (isCheckingToken) {
+		return (
+			<div className="min-h-screen flex items-center justify-center bg-gray-50">
+				<div className="text-center">
+					<svg className="animate-spin h-12 w-12 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+						<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+						<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					</svg>
+					<p className="mt-4 text-gray-600">Tizim tekshirilmoqda...</p>
+				</div>
+			</div>
+		)
+	}
+
+	// Asosiy render qismi
 	return (
 		<div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
 			<div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-700 to-blue-900 text-white p-12 flex-col justify-center relative overflow-hidden">
@@ -151,7 +241,6 @@ const Login = () => {
 								Ishga kelish-ketish vaqtlarini aniq hisobga olish
 							</p>
 						</div>
-
 					</div>
 
 					<div className="mt-12 pt-6 border-t border-blue-400 border-opacity-30">

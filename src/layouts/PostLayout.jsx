@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import PostNavbar from '../components/PostNavbar'
 import PostSidebar from '../components/PostSidebar'
-const UserLayout = () => {
+const PostLayout = () => {
 	const navigate = useNavigate()
 	const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -41,4 +41,4 @@ const UserLayout = () => {
 	)
 }
 
-export default UserLayout
+export default PostLayout

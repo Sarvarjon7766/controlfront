@@ -25,9 +25,15 @@ const UserSidebar = () => {
 
 			</div>
 			<nav className="flex-1 space-y-2">
-
 				<Link
-					to="/post/departament"
+					to="/viewer/attandance"
+					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+				>
+					<FaBuildingCircleCheck className="text-blue-500 mr-3 group-hover:text-blue-600" />
+					<span className="font-medium">Nazorat</span>
+				</Link>
+				<Link
+					to="/viewer/departament"
 					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
 				>
 					<FaCheckDouble className="text-blue-500 mr-3 group-hover:text-blue-600" />
@@ -35,26 +41,13 @@ const UserSidebar = () => {
 				</Link>
 
 				<Link
-					to="/post/users"
+					to="/viewer/users"
 					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
 				>
 					<FaUsers className="text-blue-500 mr-3 group-hover:text-blue-600" />
 					<span className="font-medium">Xodimlar</span>
 				</Link>
-				<Link
-					to="/post/attandance"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
-				>
-					<FaBuildingCircleCheck className="text-blue-500 mr-3 group-hover:text-blue-600" />
-					<span className="font-medium">Nazorat</span>
-				</Link>
-				<Link
-					to="/manitor"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
-				>
-					<FaBuildingCircleCheck className="text-blue-500 mr-3 group-hover:text-blue-600" />
-					<span className="font-medium">Post Manitor</span>
-				</Link>
+
 			</nav>
 
 			<div className="mt-auto">

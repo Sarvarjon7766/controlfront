@@ -4,13 +4,14 @@ import 'react-toastify/dist/ReactToastify.css'
 import Profile from './components/Profile'
 import ProtectedRoute from './context/ProtectedRoute'
 import { AdminAttandance, AdminPost, AdminUsers, Departament } from './pages/admin/index'
-import { UserAttandance, UserDepartment, UserUsers } from './pages/user/index'
 import PostMonitor from './pages/post/PostManitor'
+import { UserAttandance, UserDepartment, UserUsers } from './pages/user/index'
 
 import Login from './components/Login'
 import Logout from './components/Logout'
 
 import AdminLayout from './layouts/AdminLayout'
+import PostLayout from './layouts/PostLayout'
 import UserLayout from './layouts/UserLayout'
 
 
@@ -51,7 +52,7 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<UserDepartment />} />
+          <Route index element={<UserAttandance />} />
           <Route path='departament' element={<UserDepartment />} />
           <Route path='users' element={<UserUsers />} />
           <Route path='attandance' element={<UserAttandance />} />
@@ -61,7 +62,7 @@ const App = () => {
           path="/post"
           element={
             <ProtectedRoute allowedRoles={['post']}>
-              <UserLayout />
+              <PostLayout />
             </ProtectedRoute>
           }
         >

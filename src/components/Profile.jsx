@@ -214,7 +214,7 @@ const Profile = () => {
 									<div className="space-y-4">
 										<div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
 											<div className="flex items-center">
-												<div className={`p-2 rounded-lg mr-4 ${user.faceDetection ? 'bg-green-100' : 'bg-gray-200'}`}>
+												<div className={`p-2 rounded-lg mr-4 bg-green-100`}>
 													<svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${user.faceDetection ? 'text-green-600' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
 														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 													</svg>
@@ -222,12 +222,12 @@ const Profile = () => {
 												<div>
 													<h4 className="font-medium text-gray-800">Yuzni aniqlash</h4>
 													<p className="text-sm text-gray-600 mt-1">
-														{user.faceDetection ? 'Tizimga kirish uchun yuzingizni skanerlash mumkin' : "Yuzni aniqlash funksiyasi o'rnatilmagan"}
+														Tizimga kirish uchun yuzingizni skanerlash mumkin
 													</p>
 												</div>
 											</div>
-											<span className={`px-3 py-1 rounded-full text-sm font-medium ${user.faceDetection ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-												{user.faceDetection ? 'Faol' : 'Faol emas'}
+											<span className={`px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800`}>
+												Faol
 											</span>
 										</div>
 

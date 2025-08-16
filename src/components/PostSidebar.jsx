@@ -27,14 +27,6 @@ const PostSidebar = () => {
 			<nav className="flex-1 space-y-2">
 
 				<Link
-					to="/post/control"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
-				>
-					<FaCheckDouble className="text-blue-500 mr-3 group-hover:text-blue-600" />
-					<span className="font-medium">Nazorat</span>
-				</Link>
-
-				<Link
 					to="/post/users"
 					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
 				>
@@ -47,6 +39,13 @@ const PostSidebar = () => {
 				>
 					<FaBuildingCircleCheck className="text-blue-500 mr-3 group-hover:text-blue-600" />
 					<span className="font-medium">Kirish Manitor</span>
+				</Link>
+				<Link
+					to="/manitor"
+					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+				>
+					<FaBuildingCircleCheck className="text-blue-500 mr-3 group-hover:text-blue-600" />
+					<span className="font-medium">Post Manitor</span>
 				</Link>
 			</nav>
 

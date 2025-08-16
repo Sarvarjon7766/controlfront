@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { FiBell, FiLogOut, FiMenu, FiPhone, FiUser, FiX } from 'react-icons/fi'
+import { FiLogOut, FiMenu, FiPhone, FiUser, FiX } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 const UserNavbar = ({ onMenuToggle }) => {
@@ -49,7 +49,7 @@ const UserNavbar = ({ onMenuToggle }) => {
 	}
 
 	const handleProfile = () => {
-		navigate('/post/profile')
+		navigate('/viewer/profile')
 		setShowProfileMenu(false)
 	}
 
@@ -96,7 +96,7 @@ const UserNavbar = ({ onMenuToggle }) => {
 
 					<div className="flex items-center space-x-6">
 						<div className="relative">
-			
+
 
 							{showBillMenu && (
 								<div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl py-2 z-50 border border-gray-200">

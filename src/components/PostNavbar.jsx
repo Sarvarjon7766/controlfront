@@ -52,17 +52,9 @@ const PostNavbar = ({ onMenuToggle }) => {
 		setShowProfileMenu(false)
 	}
 
-	const formatDate = (dateString) => {
-		const options = { month: 'long', day: 'numeric' }
-		return new Date(dateString).toLocaleDateString('uz-UZ', options)
-	}
 
-	const toggleBillMenu = () => {
-		setShowBillMenu(!showBillMenu)
-		if (isMobile && showProfileMenu) {
-			setShowProfileMenu(false)
-		}
-	}
+
+
 
 	const toggleProfileMenu = () => {
 		setShowProfileMenu(!showProfileMenu)
@@ -108,13 +100,18 @@ const PostNavbar = ({ onMenuToggle }) => {
 								onClick={toggleProfileMenu}
 								aria-label="User menu"
 							>
-								<div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center border-2 border-blue-400 group-hover:border-blue-300 transition-all">
-									{user?.image ? (
-										<img src={user.image} alt="Profile" className="w-full h-full rounded-full object-cover" />
+								<div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center border-2 border-blue-400 group-hover:border-blue-300 transition-all overflow-hidden">
+									{user?.photo ? (
+										<img
+											src={`${import.meta.env.VITE_BASE_URL}/uploads/${user.photo}`}
+											alt={user.fullName}
+											className="w-full h-full object-cover"
+										/>
 									) : (
 										<FiUser size={18} className="text-blue-100" />
 									)}
 								</div>
+
 								<div className="text-left">
 									<p className="font-medium text-white">{user.fullName || 'Foydalanuvchi'}</p>
 									<p className="text-xs text-blue-200">{user.position || 'Lavozim'}</p>

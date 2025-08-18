@@ -69,31 +69,28 @@ const Profile = () => {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-			{/* Creative Header */}
-			<header className="bg-white shadow-sm">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
-					<h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
-						Mening Profilim
-					</h1>
-					<div className="text-sm text-gray-500">
-						Oxirgi faollik: <span className="font-medium text-indigo-600">
-							{new Date(user.updatedAt).toLocaleString()}
-						</span>
-					</div>
-				</div>
-			</header>
 
-			<main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<main className="mx-auto p-2 ">
 				<div className="flex flex-col lg:flex-row gap-8">
 					{/* Creative Profile Card */}
 					<div className="w-full lg:w-1/3">
 						<div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
 							<div className="bg-gradient-to-r from-indigo-500 to-blue-600 h-20"></div>
 							<div className="px-6 pb-8 -mt-12 relative">
-								<div className="w-24 h-24 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center text-3xl font-bold text-indigo-700 mx-auto shadow-lg">
-									{user.fullName.split(' ').map(name => name[0]).join('')}
+								<div className="w-24 h-24 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center text-3xl font-bold text-indigo-700 mx-auto shadow-lg overflow-hidden">
+									{user.photo ? (
+										<img
+											src={`${import.meta.env.VITE_BASE_URL}/uploads/${user.photo}`}
+											alt={user.fullName}
+											className="w-full h-full object-cover"
+										/>
+									) : (
+										user.fullName
+											.split(' ')
+											.map(name => name[0])
+											.join('')
+									)}
 								</div>
-
 								<div className="text-center mt-6">
 									<h2 className="text-2xl font-bold text-gray-800">{user.fullName}</h2>
 									<div className="mt-2">

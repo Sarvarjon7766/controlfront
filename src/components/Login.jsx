@@ -33,6 +33,7 @@ const Login = () => {
 					timeout: 10000
 				}
 			)
+			console.log(response.data)
 			return response.data?.success || false
 		} catch (error) {
 			console.error('Token tekshirishda xatolik:', error)
@@ -40,7 +41,6 @@ const Login = () => {
 		}
 	}
 
-	// Rolga qarab yo'naltirish
 	const redirectBasedOnRole = (role) => {
 		const lowerRole = role?.toLowerCase()
 

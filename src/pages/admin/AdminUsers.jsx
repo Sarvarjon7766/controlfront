@@ -18,6 +18,9 @@ const AdminUsers = () => {
 	const [imagePreview, setImagePreview] = useState(null)
 	const [imageFile, setImageFile] = useState(null)
 	const [minlavel, setMinLavel] = useState(1)
+	const [commentModalOpen, setCommentModalOpen] = useState(false)
+	const [selectedUser, setSelectedUser] = useState(null)
+	const [commentText, setCommentText] = useState('')
 
 	const [userData, setUserData] = useState({
 		_id: '',
@@ -42,13 +45,18 @@ const AdminUsers = () => {
 				headers: { Authorization: `Bearer ${token}` },
 			})
 			if (res.data.success) {
-				setMinLavel(res.data.lavel)
+				const newMinLavel = res.data.lavel
+				setMinLavel(newMinLavel)
 				if (!isEditMode) {
-					setUserData(prev => ({ ...prev, lavel: res.data.lavel }))
+					setUserData(prev => ({ ...prev, lavel: newMinLavel }))
 				}
 			}
 		} catch (error) {
 			toast.error('Tartib raqamni yuklashda xatolik')
+			setMinLavel(1)
+			if (!isEditMode) {
+				setUserData(prev => ({ ...prev, lavel: 1 }))
+			}
 		}
 	}
 
@@ -74,7 +82,6 @@ const AdminUsers = () => {
 				const sortedUsers = [...res.data.users].sort((a, b) => a.lavel - b.lavel)
 				setUsers(sortedUsers)
 				setFilteredUsers(sortedUsers)
-				console.log(sortedUsers)
 			}
 		} catch (error) {
 			toast.error('Foydalanuvchilarni yuklashda xatolik')
@@ -82,14 +89,64 @@ const AdminUsers = () => {
 	}
 
 	useEffect(() => {
+		fetchLavel()
 		fetchDepartments()
 		fetchUsers()
-		fetchLavel()
-	}, [])
+	}, [isEditMode])
 
 	useEffect(() => {
 		filterUsers()
 	}, [selectedDepartment, searchTerm, users])
+
+	// Statistikani hisoblash
+	const calculateStats = () => {
+		const totalUsers = users.length
+		const ishdaCount = users.filter(u => u.attendanceStatus === 'ishda').length
+		const tashqaridaCount = users.filter(u => u.attendanceStatus === 'tashqarida').length
+		const kelmaganCount = users.filter(u => u.attendanceStatus === 'kelmagan').length
+
+		return {
+			total: totalUsers,
+			ishda: {
+				count: ishdaCount,
+				percentage: totalUsers > 0 ? Math.round((ishdaCount / totalUsers) * 100) : 0
+			},
+			tashqarida: {
+				count: tashqaridaCount,
+				percentage: totalUsers > 0 ? Math.round((tashqaridaCount / totalUsers) * 100) : 0
+			},
+			kelmagan: {
+				count: kelmaganCount,
+				percentage: totalUsers > 0 ? Math.round((kelmaganCount / totalUsers) * 100) : 0
+			}
+		}
+	}
+
+	const stats = calculateStats()
+
+	// Komentariya funksiyalari
+	const openCommentModal = (user) => {
+		setSelectedUser(user)
+		setCommentText(user.comment || '')
+		setCommentModalOpen(true)
+	}
+
+	const handleCommentSubmit = async () => {
+		try {
+			const res = await axios.put(
+				`${import.meta.env.VITE_BASE_URL}/api/user/comment/${selectedUser._id}`,
+				{ comment: commentText },
+				{ headers: { Authorization: `Bearer ${token}` } }
+			)
+			if (res.data.success) {
+				toast.success("Komentariya saqlandi!")
+				fetchUsers()
+				setCommentModalOpen(false)
+			}
+		} catch (error) {
+			toast.error("Komentariyani saqlashda xatolik")
+		}
+	}
 
 	// Helper Functions
 	const filterUsers = () => {
@@ -111,22 +168,18 @@ const AdminUsers = () => {
 
 	const handleInputChange = (e) => {
 		const { name, value, type, checked } = e.target
-
-		// For checkbox inputs, use the 'checked' property
 		if (type === 'checkbox') {
 			setUserData(prev => ({
 				...prev,
 				[name]: checked
 			}))
 		}
-		// For number inputs, convert value to number
 		else if (type === 'number') {
 			setUserData(prev => ({
 				...prev,
 				[name]: value === '' ? '' : Number(value)
 			}))
 		}
-		// For all other input types (text, tel, etc.)
 		else {
 			setUserData(prev => ({
 				...prev,
@@ -166,7 +219,11 @@ const AdminUsers = () => {
 			password: '',
 			hodimID: '',
 			lavel: minlavel || 1,
-			role: 'viewer'
+			role: 'viewer',
+			birthday: '',
+			phone_personal: '',
+			phone_work: '',
+			isEdit: true
 		})
 		setImagePreview(null)
 		setImageFile(null)
@@ -185,7 +242,8 @@ const AdminUsers = () => {
 			lavel: user.lavel || '',
 			birthday: user.birthday,
 			phone_personal: user.phone_personal,
-			phone_work: user.phone_work
+			phone_work: user.phone_work,
+			isEdit: user.isEdit || true
 		})
 
 		if (user.photo) {
@@ -212,10 +270,20 @@ const AdminUsers = () => {
 			formData.append('birthday', userData.birthday)
 			formData.append('phone_personal', userData.phone_personal)
 			formData.append('phone_work', userData.phone_work)
+			formData.append('isEdit', userData.isEdit)
 
 			if (userData.password) formData.append('password', userData.password)
 			if (userData.department) formData.append('department', userData.department)
-			if (imageFile) formData.append('image', imageFile)
+
+			// Agar yangi rasm tanlanmagan bo'lsa, lekin oldin rasm bor bo'lsa
+			if (!imageFile && imagePreview && imagePreview.includes('uploads/')) {
+				// Eski rasm nomini olamiz (URL dan oxirgi qismini)
+				const oldImageName = imagePreview.split('uploads/')[1]
+				formData.append('oldImage', oldImageName)
+			} else if (imageFile) {
+				// Yangi rasm tanlangan bo'lsa
+				formData.append('image', imageFile)
+			}
 
 			let res
 			if (isEditMode) {
@@ -283,7 +351,6 @@ const AdminUsers = () => {
 	const exportUsersToExcel = async () => {
 		setExportLoading(true)
 		try {
-			// Prepare the data for export
 			const exportData = users.map((user, index) => ({
 				'№': index + 1,
 				'F.I.Sh': user.fullName,
@@ -298,7 +365,8 @@ const AdminUsers = () => {
 				'Holati': getStatusText(user.attendanceStatus || 'Nomaʼlum'),
 				'Tartib raqam': user.lavel || '',
 				'Yaratilgan sana': new Date(user.createdAt).toLocaleDateString('uz-UZ'),
-				'Oxirgi tahrir': user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('uz-UZ') : 'Mavjud emas'
+				'Oxirgi tahrir': user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('uz-UZ') : 'Mavjud emas',
+				'Komentariya': user.comment || ''
 			}))
 			const wscols = [
 				{ wch: 5 },   // №
@@ -314,20 +382,18 @@ const AdminUsers = () => {
 				{ wch: 15 },  // Holati
 				{ wch: 15 },  // Tartib raqam
 				{ wch: 15 },  // Yaratilgan sana
-				{ wch: 15 }   // Oxirgi tahrir
+				{ wch: 15 },   // Oxirgi tahrir
+				{ wch: 30 }    // Komentariya
 			]
 
-			// Create worksheet and workbook
 			const ws = XLSX.utils.json_to_sheet(exportData)
 			ws['!cols'] = wscols
 
 			const wb = XLSX.utils.book_new()
 			XLSX.utils.book_append_sheet(wb, ws, "Xodimlar")
 
-			// Generate file name with current date
 			const fileName = `xodimlar_${new Date().toISOString().slice(0, 10)}.xlsx`
 
-			// Export to Excel
 			XLSX.writeFile(wb, fileName)
 			toast.success("Excel fayliga yuklandi!")
 		} catch (error) {
@@ -342,10 +408,125 @@ const AdminUsers = () => {
 		<div className="p-4 md:p-6 bg-gray-50 min-h-screen">
 			<ToastContainer position="top-right" autoClose={5000} />
 
+			{/* Statistikalar */}
+			<div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
+				<div className="flex items-center justify-between mb-6">
+					<h3 className="text-xl font-bold text-indigo-700 flex items-center">
+						<svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+						</svg>
+						Xodimlar statistikasi
+					</h3>
+					<span className="text-sm px-3 py-1 bg-blue-50 text-blue-600 rounded-full">
+						Jami: {stats.total} xodim
+					</span>
+				</div>
+
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+					{/* Ishda bo'lganlar */}
+					<div className="bg-green-50 p-4 rounded-xl border border-green-100">
+						<div className="flex flex-col items-center">
+							<div className="relative w-24 h-24 mb-3">
+								<svg className="w-full h-full" viewBox="0 0 36 36">
+									<path
+										d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+										fill="none"
+										stroke="#E5F7F0"
+										strokeWidth="3"
+									/>
+									<path
+										d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+										fill="none"
+										stroke="#10B981"
+										strokeWidth="3"
+										strokeDasharray={`${stats.ishda.percentage}, 100`}
+										strokeLinecap="round"
+									/>
+								</svg>
+								<div className="absolute inset-0 flex items-center justify-center">
+									<span className="text-2xl font-bold text-green-600">{stats.ishda.percentage}%</span>
+								</div>
+							</div>
+							<div className="text-center">
+								<p className="font-semibold text-green-700">Ishda</p>
+								<p className="text-sm text-green-600 mt-1">
+									<span className="font-medium">{stats.ishda.count}</span> / {stats.total}
+								</p>
+							</div>
+						</div>
+					</div>
+
+					{/* Tashqarida bo'lganlar */}
+					<div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+						<div className="flex flex-col items-center">
+							<div className="relative w-24 h-24 mb-3">
+								<svg className="w-full h-full" viewBox="0 0 36 36">
+									<path
+										d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+										fill="none"
+										stroke="#FEF3E7"
+										strokeWidth="3"
+									/>
+									<path
+										d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+										fill="none"
+										stroke="#F59E0B"
+										strokeWidth="3"
+										strokeDasharray={`${stats.tashqarida.percentage}, 100`}
+										strokeLinecap="round"
+									/>
+								</svg>
+								<div className="absolute inset-0 flex items-center justify-center">
+									<span className="text-2xl font-bold text-amber-600">{stats.tashqarida.percentage}%</span>
+								</div>
+							</div>
+							<div className="text-center">
+								<p className="font-semibold text-amber-700">Tashqarida</p>
+								<p className="text-sm text-amber-600 mt-1">
+									<span className="font-medium">{stats.tashqarida.count}</span> / {stats.total}
+								</p>
+							</div>
+						</div>
+					</div>
+
+					{/* Kelmaganlar */}
+					<div className="bg-red-50 p-4 rounded-xl border border-red-100">
+						<div className="flex flex-col items-center">
+							<div className="relative w-24 h-24 mb-3">
+								<svg className="w-full h-full" viewBox="0 0 36 36">
+									<path
+										d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+										fill="none"
+										stroke="#FEECEC"
+										strokeWidth="3"
+									/>
+									<path
+										d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+										fill="none"
+										stroke="#EF4444"
+										strokeWidth="3"
+										strokeDasharray={`${stats.kelmagan.percentage}, 100`}
+										strokeLinecap="round"
+									/>
+								</svg>
+								<div className="absolute inset-0 flex items-center justify-center">
+									<span className="text-2xl font-bold text-red-600">{stats.kelmagan.percentage}%</span>
+								</div>
+							</div>
+							<div className="text-center">
+								<p className="font-semibold text-red-700">Kelmagan</p>
+								<p className="text-sm text-red-600 mt-1">
+									<span className="font-medium">{stats.kelmagan.count}</span> / {stats.total}
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			{/* Search and Filter Section */}
 			<div className="bg-white rounded-xl shadow p-4 mb-6">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-					{/* Search Input - Full width on mobile, flex-1 on desktop */}
 					<div className="relative w-full md:flex-1">
 						<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
 							<FiSearch />
@@ -359,9 +540,7 @@ const AdminUsers = () => {
 						/>
 					</div>
 
-					{/* Action Buttons - Stack on mobile, row on desktop */}
 					<div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
-						{/* Filter Dropdown - Always visible */}
 						<div className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg flex-shrink-0">
 							<FiFilter className="text-gray-500" />
 							<select
@@ -376,7 +555,6 @@ const AdminUsers = () => {
 							</select>
 						</div>
 
-						{/* Excel Export Button - Icon only on small screens */}
 						<button
 							onClick={exportUsersToExcel}
 							disabled={exportLoading}
@@ -399,7 +577,6 @@ const AdminUsers = () => {
 							</span>
 						</button>
 
-						{/* Add User Button - Icon only on small screens */}
 						<button
 							onClick={() => {
 								resetForm()
@@ -471,9 +648,14 @@ const AdminUsers = () => {
 												<span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(user.attendanceStatus)}`}>
 													{getStatusText(user.attendanceStatus)}
 												</span>
-												<button className="text-gray-400 hover:text-blue-500">
-													<FaRegCommentDots size={14} />
-												</button>
+												{user.attendanceStatus === 'ishda' && (
+													<button
+														className="text-gray-400 hover:text-blue-500"
+														onClick={() => openCommentModal(user)}
+													>
+														<FaRegCommentDots size={14} />
+													</button>
+												)}
 											</div>
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -498,6 +680,7 @@ const AdminUsers = () => {
 				</div>
 			</div>
 
+			{/* Add/Edit User Modal */}
 			{isModalOpen && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
@@ -842,7 +1025,40 @@ const AdminUsers = () => {
 					</div>
 				</div>
 			)}
-		</div >
+
+			{/* Comment Modal */}
+			{commentModalOpen && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+					<div className="fixed inset-0 backdrop-blur-sm" onClick={() => setCommentModalOpen(false)}></div>
+					<div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
+						<div className="p-6">
+							<h3 className="text-xl font-bold mb-4">{selectedUser?.fullName} uchun komentariya</h3>
+							<textarea
+								className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+								rows={4}
+								value={commentText}
+								onChange={(e) => setCommentText(e.target.value)}
+								placeholder="Komentariya yozing..."
+							/>
+							<div className="flex justify-end gap-3">
+								<button
+									className="px-4 py-2 border border-gray-300 rounded-lg"
+									onClick={() => setCommentModalOpen(false)}
+								>
+									Bekor qilish
+								</button>
+								<button
+									className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+									onClick={handleCommentSubmit}
+								>
+									Saqlash
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+		</div>
 	)
 }
 

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 import {
 	FaClock,
+	FaEdit,
 	FaFilter,
 	FaRegCommentDots,
 	FaUserCheck,
@@ -17,7 +18,7 @@ import {
 import { PulseLoader } from 'react-spinners'
 import { toast } from 'react-toastify'
 
-const UserAttendance = () => {
+const AdminEntryExit = () => {
 	const token = localStorage.getItem('token')
 	const [users, setUsers] = useState([])
 	const [departments, setDepartments] = useState([])
@@ -27,25 +28,14 @@ const UserAttendance = () => {
 	const [selectedDepartment, setSelectedDepartment] = useState('all')
 	const [selectedStatus, setSelectedStatus] = useState('all')
 	const [commentModalOpen, setCommentModalOpen] = useState(false)
+	const [timeModalOpen, setTimeModalOpen] = useState(false)
+	const [modalType, setModalType] = useState('') // 'entry' or 'exit'
 	const [selectedUser, setSelectedUser] = useState(null)
 	const [commentText, setCommentText] = useState('')
-	const [currentUserId, setCurrentUserId] = useState(null) // Yangi qo'shilgan holat
+	const [timeValue, setTimeValue] = useState('')
+	const [currentUserId, setCurrentUserId] = useState(null)
 
-	// Foydalanuvchi ID sini olish
-	const fetchCurrentUserId = async () => {
-		try {
-			const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/user/getuserId`, {
-				headers: { Authorization: `Bearer ${token}` },
-			})
-			if (res.data.success) {
-				setCurrentUserId(res.data.userId)
-			}
-		} catch (error) {
-			toast.error("Foydalanuvchi ID sini olishda xato")
-		}
-	}
-
-	// Check if user is late (arrived more than 5 minutes after first check-in)
+	// Check if user is late
 	const isLate = (user) => {
 		if (!user.firstCheckInTime || !user.lastCheckInTime) return false
 
@@ -77,6 +67,7 @@ const UserAttendance = () => {
 			])
 
 			if (usersRes.data.success && deptRes.data.success) {
+				console.log(usersRes.data)
 				const processedUsers = usersRes.data.users.map(user => ({
 					...user,
 					attendanceStatus: user.attendanceStatus || 'kelmagan',
@@ -106,6 +97,20 @@ const UserAttendance = () => {
 		}
 	}
 
+	// Get current user ID
+	const fetchCurrentUserId = async () => {
+		try {
+			const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/user/getuserId`, {
+				headers: { Authorization: `Bearer ${token}` },
+			})
+			if (res.data.success) {
+				setCurrentUserId(res.data.userId)
+			}
+		} catch (error) {
+			toast.error("Foydalanuvchi ID sini olishda xato")
+		}
+	}
+
 	// Count late arrivals
 	const countLateArrivals = () => {
 		return users.filter(user =>
@@ -113,7 +118,7 @@ const UserAttendance = () => {
 		).length
 	}
 
-	// Calculate statistics for circular charts
+	// Calculate statistics
 	const calculateStats = () => {
 		const totalUsers = users.length
 		const ishdaCount = users.filter(u => u.attendanceStatus === 'ishda').length
@@ -176,8 +181,7 @@ const UserAttendance = () => {
 
 	// Comment functions
 	const openCommentModal = (user) => {
-		// Faqat currentUserId ga teng bo'lgan va ishda bo'lgan xodimlargina ruxsat beramiz
-		if (currentUserId && user._id === currentUserId && user.attendanceStatus === 'ishda') {
+		if (user.isEdit) {
 			setSelectedUser(user)
 			setCommentText(user.comment || '')
 			setCommentModalOpen(true)
@@ -201,6 +205,45 @@ const UserAttendance = () => {
 		}
 	}
 
+	// Time edit functions
+	const openTimeModal = (user, type) => {
+		console.log(filteredUsers)
+		if (user.isEdit) {
+			setSelectedUser(user)
+			setModalType(type)
+			setTimeValue(type === 'entry' ? user.entryTime : user.exitTime)
+			setTimeModalOpen(true)
+		}
+	}
+
+	const handleTimeSubmit = async () => {
+		try {
+			const timeString = `2023-01-01T${timeValue}:00` // arbitrary date + time
+			const isoString = new Date(timeString).toISOString()
+
+			const res = await axios.put(
+				`${import.meta.env.VITE_BASE_URL}/api/user/user-time/${selectedUser.hodimID}`,
+				{
+					type: modalType,
+					time: isoString,
+					userId: selectedUser._id
+				},
+				{ headers: { Authorization: `Bearer ${token}` } }
+			)
+			console.log(res.data)
+
+			if (res.data.success) {
+
+				toast.success(`Vaqt muvaffaqiyatli o'zgartirildi!`)
+				fetchData()
+				setTimeModalOpen(false)
+			}
+		} catch (error) {
+			toast.error(error.message)
+		}
+	}
+
+
 	// Filter users
 	const filteredUsers = users.filter(user => {
 		const matchesSearch =
@@ -222,8 +265,9 @@ const UserAttendance = () => {
 		return matchesSearch && matchesDepartment && matchesStatus
 	})
 
+
 	useEffect(() => {
-		fetchCurrentUserId() // Foydalanuvchi ID sini yuklash
+		fetchCurrentUserId()
 		fetchData()
 	}, [])
 
@@ -232,7 +276,7 @@ const UserAttendance = () => {
 			{/* Header and Filters */}
 			<div className="bg-white rounded-xl shadow p-4 mb-6">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-					<h1 className="text-xl font-bold text-indigo-600 flex items-center">
+					<h1 className="text-2xl font-bold text-indigo-600 flex items-center">
 						<FaUsers className="text-indigo-500 mr-2" />
 						Xodimlar Davomati
 					</h1>
@@ -245,7 +289,7 @@ const UserAttendance = () => {
 							<input
 								type="text"
 								placeholder="Xodimlarni qidirish..."
-								className="pl-10 pr-4 py-2 text-sm w-full border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+								className="pl-10 pr-4 py-2 text-sm w-full border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
 							/>
@@ -286,14 +330,14 @@ const UserAttendance = () => {
 								fetchData()
 							}}
 							disabled={refreshing}
-							className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-sm w-full sm:w-auto"
+							className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm w-full sm:w-auto transition-colors"
 							title="Yangilash"
 						>
 							{refreshing ? (
 								<PulseLoader size={6} color="white" />
 							) : (
 								<>
-									<FiRefreshCw size={14} />
+									<FiRefreshCw size={14} className="animate-spin" />
 									<span>Yangilash</span>
 								</>
 							)}
@@ -305,21 +349,17 @@ const UserAttendance = () => {
 			{/* Stats Summary - Circular Charts */}
 			<div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
 				{/* Ishda bo'lganlar */}
-				<div className="bg-white rounded-lg shadow p-4 flex items-center">
+				<div className="bg-white rounded-lg shadow p-4 flex items-center hover:shadow-md transition-shadow">
 					<div className="relative w-16 h-16 mr-4">
 						<svg className="w-full h-full" viewBox="0 0 36 36">
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#e6e6e6"
 								strokeWidth="3"
 							/>
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#10B981"
 								strokeWidth="3"
@@ -339,21 +379,17 @@ const UserAttendance = () => {
 				</div>
 
 				{/* Kelmaganlar */}
-				<div className="bg-white rounded-lg shadow p-4 flex items-center">
+				<div className="bg-white rounded-lg shadow p-4 flex items-center hover:shadow-md transition-shadow">
 					<div className="relative w-16 h-16 mr-4">
 						<svg className="w-full h-full" viewBox="0 0 36 36">
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#e6e6e6"
 								strokeWidth="3"
 							/>
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#EF4444"
 								strokeWidth="3"
@@ -373,21 +409,17 @@ const UserAttendance = () => {
 				</div>
 
 				{/* Tashqarida bo'lganlar */}
-				<div className="bg-white rounded-lg shadow p-4 flex items-center">
+				<div className="bg-white rounded-lg shadow p-4 flex items-center hover:shadow-md transition-shadow">
 					<div className="relative w-16 h-16 mr-4">
 						<svg className="w-full h-full" viewBox="0 0 36 36">
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#e6e6e6"
 								strokeWidth="3"
 							/>
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#3B82F6"
 								strokeWidth="3"
@@ -407,21 +439,17 @@ const UserAttendance = () => {
 				</div>
 
 				{/* Kechikkanlar */}
-				<div className="bg-white rounded-lg shadow p-4 flex items-center">
+				<div className="bg-white rounded-lg shadow p-4 flex items-center hover:shadow-md transition-shadow">
 					<div className="relative w-16 h-16 mr-4">
 						<svg className="w-full h-full" viewBox="0 0 36 36">
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#e6e6e6"
 								strokeWidth="3"
 							/>
 							<path
-								d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
+								d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
 								fill="none"
 								stroke="#F59E0B"
 								strokeWidth="3"
@@ -466,7 +494,7 @@ const UserAttendance = () => {
 									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Xodim</th>
 									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Lavozim</th>
 									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Boʻlim</th>
-									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Telefon(qisqa raqam)</th>
+									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Telefon</th>
 									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Kirish</th>
 									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Chiqish</th>
 									<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Izoh</th>
@@ -476,7 +504,7 @@ const UserAttendance = () => {
 							<tbody className="bg-white divide-y divide-gray-200">
 								{filteredUsers.map((user, index) => (
 									<tr key={user._id} className={`
-                    hover:bg-opacity-90
+                    hover:bg-opacity-90 transition-colors
                     ${!user.attendanceStatus || user.attendanceStatus === 'kelmagan'
 											? 'bg-red-50 hover:bg-red-100'
 											: user.attendanceStatus === 'ishda'
@@ -508,17 +536,15 @@ const UserAttendance = () => {
 													)}
 												</div>
 												<div className="ml-3">
-													<p className="text-sm font-medium text-gray-900 flex items-center">
+													<p className="text-sm font-medium text-gray-900">
 														{user.fullName}
 													</p>
-													{/* <p className="text-xs text-gray-500">
-														@{user.username}
-													</p> */}
+													<p className="text-xs text-gray-500">{user.hodimID}</p>
 												</div>
 											</div>
 										</td>
 										<td className="px-4 py-4 text-sm text-gray-900">
-											{user.position}
+											{user.position || '-'}
 										</td>
 										<td className="px-4 py-4 text-sm text-gray-900">
 											{user.department?.name || "Boʻlimsiz"}
@@ -529,24 +555,47 @@ const UserAttendance = () => {
 												: '-'}
 										</td>
 										<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-											{user.entryTime}
+											<div className="flex items-center gap-1">
+												<span>{user.entryTime}</span>
+												{(user.lastCheckInTime === null || getStatusText(user.attendanceStatus) === 'Tashqarida') && (
+													<button
+														onClick={() => openTimeModal(user, 'entry')}
+														className="p-1 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+														title="Kirish vaqtini tahrirlash"
+													>
+														<FaEdit size={12} />
+													</button>
+												)}
+											</div>
 										</td>
 										<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-											{user.exitTime}
+											<div className="flex items-center gap-1">
+												<span>{user.exitTime}</span>
+												{user.lastComment !== null && user.lastCheckOutTime === null && user.lastCheckInTime !== null && (
+													<button
+														onClick={() => openTimeModal(user, 'exit')}
+														className="p-1 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+														title="Chiqish vaqtini tahrirlash"
+													>
+														<FaEdit size={12} />
+													</button>
+												)}
+											</div>
 										</td>
 										<td className="px-4 py-4 text-sm text-gray-900 whitespace-normal break-words max-w-xs">
-											{user.comment}
-											{currentUserId && user._id === currentUserId && user.attendanceStatus === 'ishda' && (
-												<button
-													onClick={() => openCommentModal(user)}
-													className="ml-2 text-gray-400 hover:text-blue-500"
-													title="Komentariya qo'shish"
-												>
-													<FaRegCommentDots size={14} />
-												</button>
-											)}
+											<div className="flex items-center gap-1">
+												<span>{user.comment}</span>
+												{user.lastCheckInTime !== null && user.lastCheckOutTime === null && (
+													<button
+														onClick={() => openCommentModal(user)}
+														className="p-1 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors"
+														title="Komentariya qo'shish"
+													>
+														<FaRegCommentDots size={12} />
+													</button>
+												)}
+											</div>
 										</td>
-
 										<td className="px-4 py-4 whitespace-nowrap">
 											<div className="flex items-center">
 												<span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.attendanceStatus)}`}>
@@ -568,38 +617,96 @@ const UserAttendance = () => {
 			{/* Comment Modal */}
 			{commentModalOpen && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-					<div className="fixed inset-0 backdrop-blur-sm" onClick={() => setCommentModalOpen(false)}></div>
-					<div className="relative bg-white rounded-xl shadow-xl w-full max-w-md z-10">
+					<div className="fixed inset-0  backdrop-blur-sm transition-opacity" onClick={() => setCommentModalOpen(false)}></div>
+					<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md z-10 transform transition-all">
 						<div className="p-6">
 							<div className="flex justify-between items-center mb-4">
-								<h3 className="text-lg font-bold text-gray-800">
-									{selectedUser?.fullName} uchun komentariya
+								<h3 className="text-xl font-bold text-gray-800">
+									<FaRegCommentDots className="inline mr-2 text-indigo-500" />
+									{selectedUser?.fullName} uchun izoh
 								</h3>
 								<button
 									onClick={() => setCommentModalOpen(false)}
-									className="text-gray-500 hover:text-gray-700"
+									className="text-gray-500 hover:text-gray-700 transition-colors"
 								>
 									<FiX size={24} />
 								</button>
 							</div>
-							<textarea
-								className="w-full p-3 border border-gray-300 text-black rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-								rows={4}
-								value={commentText}
-								onChange={(e) => setCommentText(e.target.value)}
-								placeholder="Komentariya yozing..."
-							/>
+							<div className="mb-6">
+								<textarea
+									className="w-full p-3 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+									rows={4}
+									value={commentText}
+									onChange={(e) => setCommentText(e.target.value)}
+									placeholder="Izoh yozing..."
+								/>
+							</div>
 							<div className="flex justify-end gap-3">
 								<button
-									className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+									className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
 									onClick={() => setCommentModalOpen(false)}
 								>
 									Bekor qilish
 								</button>
 								<button
-									className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+									className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
 									onClick={handleCommentSubmit}
 								>
+									<FaRegCommentDots size={14} />
+									Saqlash
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Time Edit Modal */}
+			{timeModalOpen && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+					<div className="fixed inset-0  backdrop-blur-sm transition-opacity" onClick={() => setTimeModalOpen(false)}></div>
+					<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md z-10 transform transition-all">
+						<div className="p-6">
+							<div className="flex justify-between items-center mb-4">
+								<h3 className="text-xl font-bold text-gray-800">
+									<FaClock className="inline mr-2 text-blue-500" />
+									{selectedUser?.fullName} uchun {modalType === 'entry' ? 'kirish' : 'chiqish'} vaqti
+								</h3>
+								<button
+									onClick={() => setTimeModalOpen(false)}
+									className="text-gray-500 hover:text-gray-700 transition-colors"
+								>
+									<FiX size={24} />
+								</button>
+							</div>
+
+							<div className="mb-6">
+								<label className="block text-sm font-medium text-gray-700 mb-2">
+									{modalType === 'entry' ? 'Kirish vaqti' : 'Chiqish vaqti'}
+								</label>
+								<div className="relative">
+									<input
+										type="time"
+										className="w-full p-3 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+										value={timeValue}
+										onChange={(e) => setTimeValue(e.target.value)}
+									/>
+									<FaClock className="absolute right-3 top-3 text-gray-400" />
+								</div>
+							</div>
+
+							<div className="flex justify-end gap-3">
+								<button
+									className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+									onClick={() => setTimeModalOpen(false)}
+								>
+									Bekor qilish
+								</button>
+								<button
+									className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+									onClick={handleTimeSubmit}
+								>
+									<FaEdit size={14} />
 									Saqlash
 								</button>
 							</div>
@@ -611,4 +718,4 @@ const UserAttendance = () => {
 	)
 }
 
-export default UserAttendance
+export default AdminEntryExit

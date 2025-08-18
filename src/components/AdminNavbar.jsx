@@ -24,24 +24,6 @@ const AdminNavbar = ({ onMenuToggle }) => {
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
-	// useEffect(() => {
-	// 	const fetchnotification = async () => {
-	// 		try {
-	// 			const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/information/getToday`, {
-	// 				headers: {
-	// 					Authorization: `Bearer ${token}`,
-	// 				},
-	// 			})
-	// 			if (res.data.success) {
-	// 				setBillNotification(res.data.informations)
-	// 			}
-	// 		} catch (error) {
-	// 			console.error('Error fetching notifications:', error)
-	// 		}
-	// 	}
-	// 	fetchnotification()
-	// }, [token])
-
 	const fetchData = async () => {
 		try {
 			const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/user/getUser`, {
@@ -120,51 +102,6 @@ const AdminNavbar = ({ onMenuToggle }) => {
 
 					<div className="flex items-center space-x-6">
 						<div className="relative">
-
-
-							{showBillMenu && (
-								<div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl py-2 z-50 border border-gray-200">
-									<div className="px-4 py-3 border-b border-gray-100 bg-blue-50 rounded-t-xl flex justify-between items-center">
-										<div>
-											<p className="text-sm font-semibold text-gray-800">Bugun tug'ilgan kunlar</p>
-											<p className="text-xs text-gray-600">{billNotification.length} ta bildirishnoma</p>
-										</div>
-										<button
-											onClick={() => setShowBillMenu(false)}
-											className="text-gray-500 hover:text-gray-700"
-										>
-											<FiX size={18} />
-										</button>
-									</div>
-									<div className="max-h-80 overflow-y-auto">
-										{billNotification.length > 0 ? (
-											billNotification.map((item, index) => (
-												<div
-													key={item._id}
-													className={`px-4 py-3 hover:bg-blue-50 transition-colors ${index !== billNotification.length - 1 ? 'border-b border-gray-100' : ''}`}
-												>
-													<div className="flex items-start">
-														<div className="p-2 bg-pink-50 rounded-lg text-pink-500 mr-3">
-															<FiPhone size={16} />
-														</div>
-														<div>
-															<p className="text-sm font-medium text-gray-800">{item.fullName}</p>
-															<p className="text-xs text-gray-500">{item.position}</p>
-															<p className="text-xs text-pink-500 mt-1">
-																Bugun tug'ilgan kuni
-															</p>
-														</div>
-													</div>
-												</div>
-											))
-										) : (
-											<div className="px-4 py-3 text-center text-sm text-gray-500">
-												Bugun tug'ilgan kunlar mavjud emas
-											</div>
-										)}
-									</div>
-								</div>
-							)}
 						</div>
 
 						<div className="relative">
@@ -173,13 +110,18 @@ const AdminNavbar = ({ onMenuToggle }) => {
 								onClick={toggleProfileMenu}
 								aria-label="User menu"
 							>
-								<div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center border-2 border-blue-400 group-hover:border-blue-300 transition-all">
-									{user?.image ? (
-										<img src={user.image} alt="Profile" className="w-full h-full rounded-full object-cover" />
+								<div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center border-2 border-blue-400 group-hover:border-blue-300 transition-all overflow-hidden">
+									{user?.photo ? (
+										<img
+											src={`${import.meta.env.VITE_BASE_URL}/uploads/${user.photo}`}
+											alt={user.fullName}
+											className="w-full h-full object-cover"
+										/>
 									) : (
 										<FiUser size={18} className="text-blue-100" />
 									)}
 								</div>
+
 								<div className="text-left">
 									<p className="font-medium text-white">{user.fullName || 'Foydalanuvchi'}</p>
 									<p className="text-xs text-blue-200">{user.position || 'Lavozim'}</p>

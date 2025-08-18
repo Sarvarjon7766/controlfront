@@ -3,8 +3,9 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Profile from './components/Profile'
 import ProtectedRoute from './context/ProtectedRoute'
-import { AdminAttandance, AdminPost, AdminUsers, Departament } from './pages/admin/index'
+import { AdminAttandance, AdminPost, AdminUsers, Departament,AdminEntryExit } from './pages/admin/index'
 import PostMonitor from './pages/post/PostManitor'
+import PostUsers from './pages/post/PostUsers'
 import { UserAttandance, UserDepartment, UserUsers } from './pages/user/index'
 
 import Login from './components/Login'
@@ -13,11 +14,6 @@ import Logout from './components/Logout'
 import AdminLayout from './layouts/AdminLayout'
 import PostLayout from './layouts/PostLayout'
 import UserLayout from './layouts/UserLayout'
-
-
-
-
-
 
 const App = () => {
   return (
@@ -41,6 +37,7 @@ const App = () => {
           <Route path='users' element={<AdminUsers />} />
           <Route path='attandance' element={<AdminAttandance />} />
           <Route path='post' element={<AdminPost />} />
+          <Route path='entry-exit' element={<AdminEntryExit />} />
           <Route path='profile' element={<Profile />} />
         </Route>
 
@@ -66,10 +63,10 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<UserDepartment />} />
+          <Route index element={<PostUsers />} />
           <Route path='departament' element={<UserDepartment />} />
           <Route path='users' element={<UserUsers />} />
-          <Route path='attandance' element={<UserAttandance />} />
+          <Route path='attandance' element={<PostUsers />} />
           <Route path='profile' element={<Profile />} />
         </Route>
         <Route path='manitor' element={<PostMonitor />} />

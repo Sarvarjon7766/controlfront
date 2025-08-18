@@ -1,15 +1,22 @@
 import { FaCheckDouble, FaUsers } from 'react-icons/fa'
 import { FaBuildingCircleCheck } from "react-icons/fa6"
-
 import { FiLogOut } from 'react-icons/fi'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const UserSidebar = () => {
 	const navigate = useNavigate()
+	const location = useLocation()
 
 	const handleLogout = () => {
 		navigate('/logout')
 	}
+
+	// Function to check if a link is active
+	const isActive = (path) => {
+		return location.pathname === path ||
+			(path !== '/viewer' && location.pathname.startsWith(path))
+	}
+
 	return (
 		<aside className="w-64 h-screen bg-blue-800 text-white p-5 border-r border-gray-200 flex flex-col">
 			<div className="mb-8">
@@ -20,34 +27,38 @@ const UserSidebar = () => {
 							<path d="M8 12h8m-8 4h8m-8-8h8" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" />
 						</svg>
 					</span>
-					Work Control
+					Face Control
 				</h2>
-
 			</div>
+
 			<nav className="flex-1 space-y-2">
 				<Link
 					to="/viewer/attandance"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/viewer/attandance') ? 'bg-blue-50 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-600'
+						}`}
 				>
-					<FaBuildingCircleCheck className="text-blue-500 mr-3 group-hover:text-blue-600" />
+					<FaBuildingCircleCheck className={`mr-3 ${isActive('/viewer/attandance') ? 'text-blue-600' : 'text-blue-500 group-hover:text-blue-600'
+						}`} />
 					<span className="font-medium">Nazorat</span>
 				</Link>
 				<Link
 					to="/viewer/departament"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/viewer/departament') ? 'bg-blue-50 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-600'
+						}`}
 				>
-					<FaCheckDouble className="text-blue-500 mr-3 group-hover:text-blue-600" />
+					<FaCheckDouble className={`mr-3 ${isActive('/viewer/departament') ? 'text-blue-600' : 'text-blue-500 group-hover:text-blue-600'
+						}`} />
 					<span className="font-medium">Bo'limlar</span>
 				</Link>
-
 				<Link
 					to="/viewer/users"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/viewer/users') ? 'bg-blue-50 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-600'
+						}`}
 				>
-					<FaUsers className="text-blue-500 mr-3 group-hover:text-blue-600" />
+					<FaUsers className={`mr-3 ${isActive('/viewer/users') ? 'text-blue-600' : 'text-blue-500 group-hover:text-blue-600'
+						}`} />
 					<span className="font-medium">Xodimlar</span>
 				</Link>
-
 			</nav>
 
 			<div className="mt-auto">

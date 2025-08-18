@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { FiBriefcase, FiKey, FiSearch, FiUpload, FiUser, FiX } from 'react-icons/fi'
+import { FiBriefcase, FiSearch, FiUser } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
 
 const AdminPost = () => {
@@ -8,20 +8,6 @@ const AdminPost = () => {
 	const [users, setUsers] = useState([])
 	const [filteredUsers, setFilteredUsers] = useState([])
 	const [searchTerm, setSearchTerm] = useState('')
-	const [isModalOpen, setIsModalOpen] = useState(false)
-	const [isEditMode, setIsEditMode] = useState(false)
-	const [imagePreview, setImagePreview] = useState(null)
-	const [imageFile, setImageFile] = useState(null)
-
-	const [userData, setUserData] = useState({
-		_id: '',
-		fullName: '',
-		position: '',
-		username: '',
-		password: '',
-		hodimID: '',
-		role: 'post'
-	})
 
 	const fetchUsers = async () => {
 		try {
@@ -58,79 +44,12 @@ const AdminPost = () => {
 		setFilteredUsers(result)
 	}
 
-	const handleInputChange = (e) => {
-		const { name, value } = e.target
-		setUserData(prev => ({
-			...prev,
-			[name]: value
-		}))
-	}
-
-	const handleImageChange = (e) => {
-		const file = e.target.files[0]
-		if (file) {
-			if (file.size > 2 * 1024 * 1024) {
-				toast.warning('Rasm hajmi 2MB dan kichik boʻlishi kerak')
-				return
-			}
-			setImageFile(file)
-			const reader = new FileReader()
-			reader.onloadend = () => {
-				setImagePreview(reader.result)
-			}
-			reader.readAsDataURL(file)
-		}
-	}
-
-	const removeImage = () => {
-		setImagePreview(null)
-		setImageFile(null)
-	}
-
-	const resetForm = () => {
-		setUserData({
-			_id: '',
-			fullName: '',
-			position: '',
-			username: '',
-			password: '',
-			hodimID: '',
-			role: 'post'
-		})
-		setImagePreview(null)
-		setImageFile(null)
-		setIsEditMode(false)
-	}
-
-	const openEditModal = (user) => {
-		setUserData({
-			_id: user._id,
-			fullName: user.fullName,
-			position: user.position,
-			username: user.username,
-			password: '',
-			hodimID: user.hodimID || '',
-			role: user.role || 'post'
-		})
-
-		if (user.photo) {
-			setImagePreview(`${import.meta.env.VITE_BASE_URL}/uploads/${user.photo}`)
-		} else {
-			setImagePreview(null)
-		}
-
-		setImageFile(null)
-		setIsEditMode(true)
-		setIsModalOpen(true)
-	}
-
-
 	const getStatusClass = (status) => {
 		switch (status) {
-			case 'kelmagan': return 'bg-red-100 text-red-800'
-			case 'tashqarida': return 'bg-yellow-100 text-yellow-800'
-			case 'ishda': return 'bg-green-100 text-green-800'
-			default: return 'bg-gray-100 text-gray-800'
+			case 'kelmagan': return 'bg-gradient-to-r from-red-100 to-red-50 text-red-800 border border-red-200'
+			case 'tashqarida': return 'bg-gradient-to-r from-amber-100 to-amber-50 text-amber-800 border border-amber-200'
+			case 'ishda': return 'bg-gradient-to-r from-green-100 to-green-50 text-green-800 border border-green-200'
+			default: return 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 border border-gray-200'
 		}
 	}
 
@@ -144,7 +63,7 @@ const AdminPost = () => {
 	}
 
 	return (
-		<div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+		<div className="p-4 md:p-6 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
 			<ToastContainer
 				position="top-right"
 				autoClose={5000}
@@ -158,63 +77,82 @@ const AdminPost = () => {
 				theme="light"
 			/>
 
-			<div className="bg-white rounded-lg shadow p-4 mb-6">
-				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+			{/* Header Section */}
+			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+				<div>
+					<h1 className="text-2xl md:text-3xl font-bold text-indigo-700 flex items-center">
+						<FiBriefcase className="mr-3 text-purple-600" />
+						Post Xodimlari
+					</h1>
+					<p className="text-gray-600 mt-1">Barcha post xodimlarining ma'lumotlari</p>
+				</div>
+			</div>
+
+			{/* Search and Stats Card */}
+			<div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-gray-100">
+				<div className="flex flex-col md:flex-row md:items-center gap-4">
 					<div className="relative flex-1">
-						<FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+						<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+							<FiSearch className="text-gray-400" />
+						</div>
 						<input
 							type="text"
 							placeholder="Xodimlarni qidirish..."
-							className="pl-10 pr-4 text-black py-2 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full pl-10 pr-4 py-3 border text-black border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
 						/>
 					</div>
+					<div className="bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-3 rounded-xl border border-blue-100">
+						<p className="text-sm text-gray-600">Xodimlar</p>
+						<p className="text-xl font-bold text-purple-700">{users.length}</p>
+					</div>
 				</div>
 			</div>
 
-			<div className="bg-white rounded-lg shadow overflow-hidden">
+			{/* Main Table */}
+			<div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
 				<div className="overflow-x-auto">
 					<table className="min-w-full divide-y divide-gray-200">
-						<thead className="bg-gray-50">
+						<thead className="bg-gradient-to-r from-purple-50 to-blue-50">
 							<tr>
-								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rasm</th>
-								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ism Familiya</th>
-								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lavozim</th>
-								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foydalanuvchi nomi</th>
-								<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holati</th>
+								<th className="px-6 py-4 text-left text-xs font-semibold text-purple-700 uppercase tracking-wider">Rasm</th>
+								<th className="px-6 py-4 text-left text-xs font-semibold text-purple-700 uppercase tracking-wider">Ism Familiya</th>
+								<th className="px-6 py-4 text-left text-xs font-semibold text-purple-700 uppercase tracking-wider">Lavozim</th>
+								<th className="px-6 py-4 text-left text-xs font-semibold text-purple-700 uppercase tracking-wider">Foydalanuvchi</th>
+								<th className="px-6 py-4 text-left text-xs font-semibold text-purple-700 uppercase tracking-wider">Holati</th>
 							</tr>
 						</thead>
 						<tbody className="bg-white divide-y divide-gray-200">
 							{filteredUsers.length > 0 ? (
 								filteredUsers.map(user => (
-									<tr key={user._id} className="hover:bg-gray-50">
+									<tr key={user._id} className="hover:bg-gray-50 transition-colors">
 										<td className="px-6 py-4 whitespace-nowrap">
 											<div className="flex-shrink-0 h-10 w-10">
 												{user.photo ? (
 													<img
-														className="h-10 w-10 rounded-full object-cover"
+														className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm"
 														src={`${import.meta.env.VITE_BASE_URL}/uploads/${user.photo}`}
 														alt={user.fullName}
 													/>
 												) : (
-													<div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+													<div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 flex items-center justify-center text-purple-600 font-medium">
 														{user.fullName.charAt(0)}
 													</div>
 												)}
 											</div>
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap">
-											<div className="text-sm font-medium text-gray-900">{user.fullName}</div>
+											<div className="text-sm font-semibold text-gray-800">{user.fullName}</div>
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap">
-											<div className="text-sm text-gray-500">{user.position}</div>
+											<div className="text-sm text-gray-600">{user.position}</div>
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap">
-											<div className="text-sm text-gray-500">{user.username}</div>
+											<div className="text-sm font-medium text-blue-600">{user.username}</div>
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap">
-											<span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full shadow-sm ${getStatusClass(user.attendanceStatus)}`}>
+											<span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(user.attendanceStatus)}`}>
 												{getStatusText(user.attendanceStatus)}
 											</span>
 										</td>
@@ -222,8 +160,14 @@ const AdminPost = () => {
 								))
 							) : (
 								<tr>
-									<td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-										Hech qanday xodim topilmadi
+									<td colSpan="5" className="px-6 py-8 text-center">
+										<div className="flex flex-col items-center justify-center">
+											<FiUser className="h-12 w-12 text-gray-400 mb-3" />
+											<h3 className="text-lg font-medium text-gray-700">Hech qanday xodim topilmadi</h3>
+											<p className="text-gray-500 mt-1">
+												{searchTerm ? "Boshqa kalit so'zlar bilan qayta urinib ko'ring" : "Ma'lumotlar mavjud emas"}
+											</p>
+										</div>
 									</td>
 								</tr>
 							)}
@@ -231,198 +175,6 @@ const AdminPost = () => {
 					</table>
 				</div>
 			</div>
-
-			{isModalOpen && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-					<div
-						className="fixed inset-0 backdrop-blur-sm"
-						onClick={() => {
-							setIsModalOpen(false)
-							resetForm()
-						}}
-					></div>
-
-					<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-						<div className="p-6">
-							<div className="flex justify-between items-center mb-6 pb-4 border-b">
-								<h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-									<FiUser className="text-blue-600" />
-									{isEditMode ? "Xodimni tahrirlash" : "Yangi xodim qoʻshish"}
-								</h2>
-								<button
-									onClick={() => {
-										setIsModalOpen(false)
-										resetForm()
-									}}
-									className="text-gray-500 hover:text-gray-700 transition-colors"
-								>
-									<FiX size={24} />
-								</button>
-							</div>
-
-							<form onSubmit={handleSubmit}>
-								<div className="mb-6 flex flex-col items-center">
-									<div className="relative mb-3">
-										{imagePreview ? (
-											<div className="relative group">
-												<img
-													src={imagePreview}
-													alt="Preview"
-													className="h-32 w-32 rounded-full object-cover border-4 border-white shadow-lg"
-												/>
-												<button
-													type="button"
-													onClick={removeImage}
-													className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-												>
-													<FiX size={16} />
-												</button>
-											</div>
-										) : (
-											<div className="h-32 w-32 rounded-full bg-gray-100 flex items-center justify-center shadow-inner">
-												<FiUser size={48} className="text-gray-400" />
-											</div>
-										)}
-									</div>
-									<label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-										<FiUpload /> Rasm yuklash
-										<input
-											type="file"
-											accept="image/*"
-											onChange={handleImageChange}
-											className="hidden"
-										/>
-									</label>
-									<p className="text-xs text-gray-500 mt-2">2MB gacha boʻlgan rasm (JPG, PNG)</p>
-								</div>
-
-								<div className="space-y-4">
-									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1">Ism Familiya</label>
-										<div className="relative">
-											<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-												<FiUser />
-											</div>
-											<input
-												type="text"
-												name="fullName"
-												value={userData.fullName}
-												placeholder='Ism Familiya'
-												onChange={handleInputChange}
-												className="w-full pl-10 pr-4 py-2 text-black border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-												required
-											/>
-										</div>
-									</div>
-
-									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1">Lavozim</label>
-										<div className="relative">
-											<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-												<FiBriefcase />
-											</div>
-											<input
-												type="text"
-												name="position"
-												placeholder='Lavozim'
-												value={userData.position}
-												onChange={handleInputChange}
-												className="w-full pl-10 pr-4 py-2 text-black border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-												required
-											/>
-										</div>
-									</div>
-
-									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1">Hodim ID</label>
-										<div className="relative">
-											<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-												<FiBriefcase />
-											</div>
-											<input
-												type="text"
-												name="hodimID"
-												placeholder='Hodim ID'
-												value={userData.hodimID}
-												onChange={handleInputChange}
-												className="w-full pl-10 pr-4 py-2 text-black border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-												required
-											/>
-										</div>
-									</div>
-
-									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1">Foydalanuvchi nomi</label>
-										<input
-											type="text"
-											name="username"
-											value={userData.username}
-											placeholder='Foydalanuvchi nomi'
-											onChange={handleInputChange}
-											className="w-full px-4 py-2 border text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-											required
-										/>
-									</div>
-
-									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1">
-											{isEditMode ? "Yangi parol (agar o'zgartirmoqchi bo'lsangiz)" : "Parol"}
-										</label>
-										<div className="relative">
-											<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-												<FiKey />
-											</div>
-											<input
-												type="password"
-												name="password"
-												value={userData.password}
-												placeholder={isEditMode ? "Yangi parol..." : "Parol"}
-												onChange={handleInputChange}
-												className="w-full pl-10 pr-4 py-2 text-black border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-												required={!isEditMode}
-											/>
-										</div>
-									</div>
-
-									{isEditMode && (
-										<div>
-											<label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-											<select
-												name="role"
-												value={userData.role}
-												onChange={handleInputChange}
-												className="w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-												required
-											>
-												<option value="post">Post</option>
-											</select>
-										</div>
-									)}
-								</div>
-
-								<div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-									<button
-										type="button"
-										onClick={() => {
-											setIsModalOpen(false)
-											resetForm()
-										}}
-										className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-									>
-										Bekor qilish
-									</button>
-									<button
-										type="submit"
-										className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-									>
-										{isEditMode ? "Saqlash" : "Qoʻshish"}
-									</button>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			)}
 		</div>
 	)
 }

@@ -1,12 +1,21 @@
 import { BsSignpost2Fill } from "react-icons/bs"
-import { FaBuilding, FaClipboardList, FaTachometerAlt, FaUsers } from 'react-icons/fa'
+import { FaBuilding, FaClipboardList, FaUsers } from 'react-icons/fa'
 import { FiLogOut } from 'react-icons/fi'
-import { Link, useNavigate } from 'react-router-dom'
+import { MdDoorFront } from "react-icons/md"
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const AdminSitebar = () => {
 	const navigate = useNavigate()
+	const location = useLocation()
+
 	const handleLogout = () => {
 		navigate('/logout')
+	}
+
+	// Function to check if a link is active
+	const isActive = (path) => {
+		return location.pathname === path ||
+			(path !== '/admin' && location.pathname.startsWith(path))
 	}
 
 	return (
@@ -19,58 +28,57 @@ const AdminSitebar = () => {
 							<path d="M8 12h8m-8 4h8m-8-8h8" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
 						</svg>
 					</span>
-					Work Control
+					Face Control
 				</h2>
 				<p className="text-xs font-medium text-blue-200 mt-1 mr-12">Platformasi</p>
 			</div>
 
 			<nav className="flex-1 space-y-2">
 				<Link
-					to="/admin"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-colors group"
-				>
-					<FaTachometerAlt className="text-blue-400 mr-3 group-hover:text-white" />
-					<span className="font-medium">Bosh Sahifa</span>
-				</Link>
-				<Link
 					to="/admin/departament"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-colors group"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/admin/departament') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700 hover:text-white'
+						}`}
 				>
-					<FaUsers className="text-blue-400 mr-3 group-hover:text-white" />
+					<FaUsers className={`mr-3 ${isActive('/admin/departament') ? 'text-white' : 'text-blue-400 group-hover:text-white'
+						}`} />
 					<span className="font-medium">Bo'limlar</span>
 				</Link>
 				<Link
 					to="/admin/users"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-colors group"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/admin/users') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700 hover:text-white'
+						}`}
 				>
-					<FaBuilding className="text-blue-400 mr-3 group-hover:text-white" />
+					<FaBuilding className={`mr-3 ${isActive('/admin/users') ? 'text-white' : 'text-blue-400 group-hover:text-white'
+						}`} />
 					<span className="font-medium">Xodimlar</span>
 				</Link>
 				<Link
 					to="/admin/post"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-colors group"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/admin/post') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700 hover:text-white'
+						}`}
 				>
-					<BsSignpost2Fill className="text-blue-400 mr-3 group-hover:text-white" />
+					<BsSignpost2Fill className={`mr-3 ${isActive('/admin/post') ? 'text-white' : 'text-blue-400 group-hover:text-white'
+						}`} />
 					<span className="font-medium">Post</span>
 				</Link>
-
-
-
 				<Link
 					to="/admin/attandance"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-colors group"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/admin/attandance') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700 hover:text-white'
+						}`}
 				>
-					<FaClipboardList className="text-blue-400 mr-3 group-hover:text-white" />
+					<FaClipboardList className={`mr-3 ${isActive('/admin/attandance') ? 'text-white' : 'text-blue-400 group-hover:text-white'
+						}`} />
 					<span className="font-medium">Nazorat</span>
 				</Link>
-
-				{/* <Link
-					to="/admin/birthday"
-					className="flex items-center p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-colors group"
+				<Link
+					to="/admin/entry-exit"
+					className={`flex items-center p-3 rounded-lg transition-colors group ${isActive('/admin/entry-exit') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700 hover:text-white'
+						}`}
 				>
-					<FaBirthdayCake className="text-blue-400 mr-3 group-hover:text-white" />
-					<span className="font-medium">Tug'ilgan kunlar</span>
-				</Link> */}
+					<MdDoorFront className={`mr-3 ${isActive('/admin/entry-exit') ? 'text-white' : 'text-blue-400 group-hover:text-white'
+						}`} />
+					<span className="font-medium">Kirish-Chiqish</span>
+				</Link>
 			</nav>
 
 			<div className="mt-auto">

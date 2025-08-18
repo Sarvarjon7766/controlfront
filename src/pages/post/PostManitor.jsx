@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { FiClock, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
+import { FiArrowLeft, FiClock, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi'
 import { ToastContainer, toast } from 'react-toastify'
 
 const PostMonitor = () => {
@@ -57,6 +57,13 @@ const PostMonitor = () => {
 	return (
 		<div className="min-h-screen bg-gray-100">
 			<ToastContainer position="top-right" autoClose={5000} />
+			<button
+				onClick={() => window.history.back()}
+				className="absolute top-4 left-4 z-20 bg-white bg-opacity-90 rounded-full p-3 shadow-md hover:bg-gray-100 transition-colors"
+				aria-label="Orqaga qaytish"
+			>
+				<FiArrowLeft className="text-xl text-gray-700" />
+			</button>
 
 			{/* Subtle Post Selection in top right */}
 			<div className="absolute top-4 right-4 z-10">
